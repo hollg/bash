@@ -2,12 +2,14 @@ mod camera;
 mod player;
 
 use bevy::prelude::*;
+use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_rapier3d::prelude::*;
 use camera::CameraPlugin;
 
 fn main() {
     App::new()
         .add_plugins((DefaultPlugins, CameraPlugin))
+        .add_plugins(WorldInspectorPlugin::new())
         .add_plugins(RapierPhysicsPlugin::<NoUserData>::default())
         .add_plugins(RapierDebugRenderPlugin::default())
         .add_plugins(player::PlayerPlugin)
