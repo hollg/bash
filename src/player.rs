@@ -102,13 +102,23 @@ fn run(
     };
 }
 
-fn jump(mut commands: Commands, mut query: Query<(&ActionState<PlayerAction>, Entity)>) {
-    let (action_state, entity) = query.single_mut();
-
-    if action_state.pressed(&PlayerAction::Jump) {
-        commands
-            .entity(entity)
-            .insert(Jump(Player::DEFAULT_JUMP_HEIGHT));
+fn jump(
+    mut commands: Commands,
+    mut query: Query<
+        (
+            &ActionState<PlayerAction>,
+            &KinematicCharacterControllerOutput,
+            Entity,
+        ),
+        Without<Jump>,
+    >,
+) {
+    if let Ok((action_state, output, entity)) = query.get_single_mut() {
+        if action_state.pressed(&PlayerAction::Jump) && output.grounded {
+            commands
+                .entity(entity)
+                .insert(Jump(Player::DEFAULT_JUMP_HEIGHT));
+        }
     }
 }
 
