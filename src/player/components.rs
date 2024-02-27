@@ -57,3 +57,6 @@ impl PlayerAction {
         }
     }
 }
+
+#[derive(Component)]
+pub struct Hand;

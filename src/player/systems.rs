@@ -1,8 +1,9 @@
 use bevy::prelude::*;
+use bevy::window::PrimaryWindow;
 use bevy_rapier3d::prelude::*;
 use leafwing_input_manager::prelude::*;
 
-use super::components::{Jump, Player, PlayerAction, PlayerBundle};
+use super::components::{Hand, Jump, Player, PlayerAction, PlayerBundle};
 
 pub fn spawn_player(
     mut commands: Commands,
@@ -36,6 +37,7 @@ pub fn spawn_player(
                 transform: Transform::from_xyz(1.0, 0.0, 0.0),
                 ..default()
             },
+            Hand,
             Name::new("Hand"),
         ))
         .id();
@@ -116,4 +118,34 @@ pub fn rise(
             None => Some(Vec3::new(0.0, upward_movement, 0.0)),
         }
     };
+}
+
+pub fn move_hand(
+    mut hand_q: Query<&mut Transform, With<Hand>>,
+    mut cursor_evr: EventReader<CursorMoved>,
+    // query to get the window (so we can read the current cursor position)
+    q_window: Query<&Window, With<PrimaryWindow>>,
+    // query to get camera transform
+    q_camera: Query<(&Camera, &GlobalTransform), With<Camera>>,
+) {
+    let mut hand_transform = hand_q.single_mut();
+    // get the camera info and transform
+    // assuming there is exactly one main camera entity, so Query::single() is OK
+    let (camera, camera_transform) = q_camera.single();
+
+    // There is only one primary window, so we can similarly get it from the query:
+    let window = q_window.single();
+
+    // check if the cursor is inside the window and get its position
+    // then, ask bevy to convert into world coordinates, and truncate to discard Z
+    if let Some(world_position) = window
+        .cursor_position()
+        .and_then(|cursor| camera.viewport_to_world(camera_transform, cursor))
+        .map(|ray| ray.origin.truncate())
+    {
+        hand_transform.translation = Vec3::new(world_position.x, world_position.y, 0.0);
+    }
+    // get cursor position
+    // get position between centre of player and cursor, correct distance from player
+    // put hand in that position
 }
