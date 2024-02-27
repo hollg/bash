@@ -33,5 +33,6 @@ fn setup(
             ..default()
         },
         Collider::cuboid(7.5, 0.05, 0.5),
+        Name::new("Floor"),
     ));
 }

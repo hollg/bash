@@ -24,16 +24,20 @@ pub fn spawn_player(
             Collider::cuboid(0.5, 0.5, 0.5),
             RigidBody::KinematicPositionBased,
             KinematicCharacterController::default(),
+            Name::new("Player"),
         ))
         .id();
 
     let hand = commands
-        .spawn((PbrBundle {
-            mesh: meshes.add(Cuboid::new(0.25, 0.25, 0.25)),
-            material: materials.add(Color::rgb_u8(255, 255, 255)),
-            transform: Transform::from_xyz(1.0, 0.0, 0.0),
-            ..default()
-        },))
+        .spawn((
+            PbrBundle {
+                mesh: meshes.add(Cuboid::new(0.25, 0.25, 0.25)),
+                material: materials.add(Color::rgb_u8(255, 255, 255)),
+                transform: Transform::from_xyz(1.0, 0.0, 0.0),
+                ..default()
+            },
+            Name::new("Hand"),
+        ))
         .id();
     commands.entity(player).push_children(&[hand]);
 }

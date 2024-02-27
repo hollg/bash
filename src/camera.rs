@@ -10,18 +10,24 @@ impl Plugin for CameraPlugin {
 
 fn setup_camera(mut commands: Commands) {
     // camera
-    commands.spawn(Camera3dBundle {
-        transform: Transform::from_xyz(0.0, 1.5, 15.0).looking_at(Vec3::ZERO, Vec3::Y),
-        ..default()
-    });
-
-    // light
-    commands.spawn(PointLightBundle {
-        point_light: PointLight {
-            shadows_enabled: true,
+    commands.spawn((
+        Camera3dBundle {
+            transform: Transform::from_xyz(0.0, 1.5, 15.0).looking_at(Vec3::ZERO, Vec3::Y),
             ..default()
         },
-        transform: Transform::from_xyz(4.0, 8.0, 4.0),
-        ..default()
-    });
+        Name::new("Camera"),
+    ));
+
+    // light
+    commands.spawn((
+        PointLightBundle {
+            point_light: PointLight {
+                shadows_enabled: true,
+                ..default()
+            },
+            transform: Transform::from_xyz(4.0, 8.0, 4.0),
+            ..default()
+        },
+        Name::new("Light"),
+    ));
 }
