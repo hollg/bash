@@ -29,19 +29,16 @@ pub fn spawn_player(
         ))
         .id();
 
-    let hand = commands
-        .spawn((
-            PbrBundle {
-                mesh: meshes.add(Cuboid::new(0.25, 0.25, 0.25)),
-                material: materials.add(Color::rgb_u8(255, 255, 255)),
-                transform: Transform::from_xyz(1.0, 0.0, 0.0),
-                ..default()
-            },
-            Hand,
-            Name::new("Hand"),
-        ))
-        .id();
-    commands.entity(player).push_children(&[hand]);
+    commands.spawn((
+        PbrBundle {
+            mesh: meshes.add(Cuboid::new(0.25, 0.25, 0.25)),
+            material: materials.add(Color::rgb_u8(255, 255, 255)),
+            transform: Transform::from_xyz(1.0, 0.0, 0.0),
+            ..default()
+        },
+        Hand(player),
+        Name::new("Hand"),
+    ));
 }
 
 pub fn gravity(mut query: Query<&mut KinematicCharacterController, Without<Jump>>) {
@@ -121,39 +118,47 @@ pub fn rise(
 }
 
 pub fn move_hand(
-    mut q_hand: Query<(&mut Transform, &Parent), With<Hand>>,
-    q_parent: Query<&GlobalTransform>,
-    // query to get the window (so we can read the current cursor position)
+    mut q_hand: Query<(&mut Transform, &Hand)>,
+    q_player: Query<&Transform, (With<Player>, Without<Hand>)>,
     q_window: Query<&Window, With<PrimaryWindow>>,
-    // query to get camera transform
     q_camera: Query<(&Camera, &GlobalTransform), With<Camera>>,
 ) {
-    let (mut hand_transform, player_entity) = q_hand.single_mut();
-    let parent_transform = q_parent
-        .get(player_entity.get())
-        .expect("Should be able to find parent");
-
-    // get the camera info and transform
-    // assuming there is exactly one camera entity, so Query::single() is OK
     let (camera, camera_transform) = q_camera.single();
 
-    // There is only one primary window, so we can similarly get it from the query:
     let window = q_window.single();
+    let Some(cursor_position) = window.cursor_position() else {
+        return;
+    };
 
-    // check if the cursor is inside the window and get its position
-    // then, ask bevy to convert into world coordinates, and truncate to discard Z
-    if let Some(world_position) = window
-        .cursor_position()
-        .and_then(|cursor| camera.viewport_to_world(camera_transform, cursor))
-        // .map(|ray| ray.origin.truncate())
-        .map(|ray| ray.origin)
-    {
-        println!("Cursor position: {:?}", world_position);
-        println!("Player position: {:?}", parent_transform.translation());
-        let world_position_3d = Vec3::new(world_position.x, world_position.y, 0.0);
-        let difference_vector = world_position_3d - parent_transform.translation();
-        let direction_vector = difference_vector.normalize();
+    for (mut hand_transform, hand) in q_hand.iter_mut() {
+        let player_transform = q_player
+            .get(hand.0)
+            .expect("Should be able to find Player who owns hand");
 
-        hand_transform.translation = direction_vector;
+        let Some(ray) = camera.viewport_to_world(camera_transform, cursor_position) else {
+            return;
+        };
+
+        let Some(distance) = ray.intersect_plane(
+            player_transform.translation,
+            Plane3d::new(camera_transform.forward()),
+        ) else {
+            return;
+        };
+
+        let cursor_point = ray.get_point(distance);
+        let difference_vector = cursor_point - player_transform.translation;
+        let hand_point = if ((difference_vector.x * difference_vector.x)
+            + (difference_vector.y * difference_vector.y)
+            + (difference_vector.z * difference_vector.z))
+            .sqrt()
+            < 1.2
+        {
+            cursor_point
+        } else {
+            player_transform.translation
+                + (cursor_point - player_transform.translation).normalize() * 1.2
+        };
+        hand_transform.translation = hand_point;
     }
 }

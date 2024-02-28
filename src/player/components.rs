@@ -58,5 +58,7 @@ impl PlayerAction {
     }
 }
 
+/// Component representing the separately controllable hand of the player's character. Contains an
+/// entity which is the Player.
 #[derive(Component)]
-pub struct Hand;
+pub struct Hand(pub Entity);
