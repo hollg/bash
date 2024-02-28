@@ -121,16 +121,20 @@ pub fn rise(
 }
 
 pub fn move_hand(
-    mut hand_q: Query<&mut Transform, With<Hand>>,
-    mut cursor_evr: EventReader<CursorMoved>,
+    mut q_hand: Query<(&mut Transform, &Parent), With<Hand>>,
+    q_parent: Query<&GlobalTransform>,
     // query to get the window (so we can read the current cursor position)
     q_window: Query<&Window, With<PrimaryWindow>>,
     // query to get camera transform
     q_camera: Query<(&Camera, &GlobalTransform), With<Camera>>,
 ) {
-    let mut hand_transform = hand_q.single_mut();
+    let (mut hand_transform, player_entity) = q_hand.single_mut();
+    let parent_transform = q_parent
+        .get(player_entity.get())
+        .expect("Should be able to find parent");
+
     // get the camera info and transform
-    // assuming there is exactly one main camera entity, so Query::single() is OK
+    // assuming there is exactly one camera entity, so Query::single() is OK
     let (camera, camera_transform) = q_camera.single();
 
     // There is only one primary window, so we can similarly get it from the query:
@@ -143,9 +147,12 @@ pub fn move_hand(
         .and_then(|cursor| camera.viewport_to_world(camera_transform, cursor))
         .map(|ray| ray.origin.truncate())
     {
-        hand_transform.translation = Vec3::new(world_position.x, world_position.y, 0.0);
+        println!("cursor world_pos: {:?}", world_position);
+        let world_position_3d = Vec3::new(world_position.x, world_position.y, 0.0);
+        let difference_vector = world_position_3d - parent_transform.translation();
+        let direction_vector = difference_vector.normalize();
+        println!("direction_vector: {:?}", direction_vector);
+
+        hand_transform.translation = direction_vector;
     }
-    // get cursor position
-    // get position between centre of player and cursor, correct distance from player
-    // put hand in that position
 }
