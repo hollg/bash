@@ -145,13 +145,14 @@ pub fn move_hand(
     if let Some(world_position) = window
         .cursor_position()
         .and_then(|cursor| camera.viewport_to_world(camera_transform, cursor))
-        .map(|ray| ray.origin.truncate())
+        // .map(|ray| ray.origin.truncate())
+        .map(|ray| ray.origin)
     {
-        println!("cursor world_pos: {:?}", world_position);
+        println!("Cursor position: {:?}", world_position);
+        println!("Player position: {:?}", parent_transform.translation());
         let world_position_3d = Vec3::new(world_position.x, world_position.y, 0.0);
         let difference_vector = world_position_3d - parent_transform.translation();
         let direction_vector = difference_vector.normalize();
-        println!("direction_vector: {:?}", direction_vector);
 
         hand_transform.translation = direction_vector;
     }
